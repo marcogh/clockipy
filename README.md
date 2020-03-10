@@ -2,12 +2,14 @@
 
 simple [Clockify](https://clockify.me) report tool
 
-## Usage
-
-    clockipy.py [year] [month]
-
 ## Installation
 
     pipenv install
+
+## Usage
+
+    mv .env.sample .env
+    vi .env
     pipenv shell
-    python clockipy.py
+    python clockipy.py [year] [month]
+
