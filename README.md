@@ -1,12 +1,12 @@
-# clockipy
+# Clockipy
 
-simple (clockify)[https://clockify.me] report tool
+simple [Clockify](https://clockify.me) report tool
 
-## usage
+## Usage
 
     clockipy.py [year] [month]
 
-## installation
+## Installation
 
     pipenv install
     pipenv shell
