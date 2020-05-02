@@ -62,11 +62,14 @@ class Clock:
         start = datetime(year, month, 1, 0,0,0)
         end = datetime(endyear, endmonth, 1,0,0,0)
         # return {'start': start, 'end': end}
-        return {"start": "2020-04-01T00:00:00.000Z", "end": "2020-05-01T00:00:00.000Z"}
+        # return {"start": "2020-04-01T00:00:00.000Z", "end": "2020-05-01T00:00:00.000Z"}
         # '2020-04-01T00:00:00'
         bound = {
-            "start": datetime.astimezone(start, self._tz).isoformat(timespec='milliseconds'),
-            "end": datetime.astimezone(end, self._tz).isoformat(timespec='milliseconds'),
+            #"start": datetime.astimezone(start, self._tz).isoformat(timespec='milliseconds'),
+            #"end": datetime.astimezone(end, self._tz).isoformat(timespec='milliseconds'),
+            "start": datetime.astimezone(start, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            "end": datetime.astimezone(end, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+
         }
         logger.debug(f"time boundaries: {bound}")
         return bound
