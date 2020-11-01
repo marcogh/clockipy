@@ -8,7 +8,7 @@ import pytz
 import requests
 from datetime import datetime, timedelta
 
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -49,27 +49,25 @@ class Clock:
         # payload = {'archived': archived}.update(self.get_time_boundaries())
         payload = self.get_time_boundaries(year, month)
         payload["project"] = project_id
+        payload["page-size"] = 200,
+        payload["archived"] = archived,
         logger.debug(f'payload: {payload}')
-        return requests.get(
+        response = requests.get(
             f"{self._base_url}/workspaces/{workspace_id}/user/{self._userid}/time-entries",
             headers=self._headers,
             params=payload,
         ).json()
+        logger.debug(response)
+        return response
 
     def get_time_boundaries(self, year, month):
         endyear = year + month//12                                                                                                
         endmonth = (month+1)%12
         start = datetime(year, month, 1, 0,0,0)
         end = datetime(endyear, endmonth, 1,0,0,0)
-        # return {'start': start, 'end': end}
-        # return {"start": "2020-04-01T00:00:00.000Z", "end": "2020-05-01T00:00:00.000Z"}
-        # '2020-04-01T00:00:00'
         bound = {
-            #"start": datetime.astimezone(start, self._tz).isoformat(timespec='milliseconds'),
-            #"end": datetime.astimezone(end, self._tz).isoformat(timespec='milliseconds'),
             "start": datetime.astimezone(start, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             "end": datetime.astimezone(end, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
         }
         logger.debug(f"time boundaries: {bound}")
         return bound
@@ -98,10 +96,10 @@ class Clock:
                 project_total = timedelta()
                 project_id = project.get("id")
                 project_name = project.get("name")
-                print(f"Project {project_name} with id: {project_id}")
+                print(f"\nProject {project_name} with id: {project_id}")
 
                 time_entries = self.get_time_entries(workspace_id, project_id, year, month)
-                print(f"Time entries:\n {time_entries}")
+                # print(f"Time entries:\n {time_entries}")
                 # print(f"{project}")
                 for time_entry in time_entries:
                     # print(f'Time entry: {time_entry}')
@@ -127,4 +125,4 @@ class Clock:
 
 if __name__ == "__main__":
     clock = Clock()
-    clock.run(year=2020, month=4)
+    clock.run(year=2020, month=10)
