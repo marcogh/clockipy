@@ -6,7 +6,10 @@ import os
 import logging
 import pytz
 import requests
+
+from sys import argv
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -62,7 +65,7 @@ class Clock:
 
     def get_time_boundaries(self, year, month):
         endyear = year + month//12                                                                                                
-        endmonth = (month+1)%12
+        endmonth = (month % 12) + 1
         start = datetime(year, month, 1, 0,0,0)
         end = datetime(endyear, endmonth, 1,0,0,0)
         bound = {
@@ -75,9 +78,10 @@ class Clock:
     def print_time_entry(self, start, end, duration):
         assert (start.date() == end.date()) 
         print(
-            f"{datetime.astimezone(start, self._tz).strftime('%Y-%m-%d %H:%M')} "
-            f"{datetime.astimezone(end, self._tz).strftime('%H:%M')} "
-            f"{'%d:%02d' % (duration.seconds/3600, duration.seconds%3600/60)}"
+            f"{datetime.astimezone(start, self._tz).strftime('%Y-%m-%d')}\t"  # date
+            f"{datetime.astimezone(start, self._tz).strftime('%H:%M')}\t"  # start
+            f"{datetime.astimezone(end, self._tz).strftime('%H:%M')}\t"  # end
+            f"{'%d:%02d' % (duration.seconds/3600, duration.seconds%3600/60)}"  # duration
         )
 
     def run(self, year, month):
@@ -96,7 +100,7 @@ class Clock:
                 project_total = timedelta()
                 project_id = project.get("id")
                 project_name = project.get("name")
-                print(f"\nProject {project_name} with id: {project_id}")
+                print(f"\nProject {project_name}\tid: {project_id}")
 
                 time_entries = self.get_time_entries(workspace_id, project_id, year, month)
                 # print(f"Time entries:\n {time_entries}")
@@ -119,10 +123,12 @@ class Clock:
                     project_total += duration
 
                 print(
-                    f"Project total: {project_total.days*24 + project_total.seconds/3600}"
+                    f"Project total:\t\t\t{project_total.days*24 + project_total.seconds/3600}"
                 )
 
 
 if __name__ == "__main__":
     clock = Clock()
-    clock.run(year=2020, month=10)
+    lastmonth = datetime.now() - relativedelta(months=1)
+    print('running with year {}, month {}'.format(lastmonth.year, lastmonth.month))
+    clock.run(lastmonth.year, lastmonth.month)
