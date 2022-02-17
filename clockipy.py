@@ -52,9 +52,9 @@ class Clock:
         # payload = {'archived': archived}.update(self.get_time_boundaries())
         payload = self.get_time_boundaries(year, month)
         payload["project"] = project_id
-        payload["page-size"] = 200,
-        payload["archived"] = archived,
-        logger.debug(f'payload: {payload}')
+        payload["page-size"] = (200,)
+        payload["archived"] = (archived,)
+        logger.debug(f"payload: {payload}")
         response = requests.get(
             f"{self._base_url}/workspaces/{workspace_id}/user/{self._userid}/time-entries",
             headers=self._headers,
@@ -64,19 +64,21 @@ class Clock:
         return response
 
     def get_time_boundaries(self, year, month):
-        endyear = year + month//12                                                                                                
+        endyear = year + month // 12
         endmonth = (month % 12) + 1
-        start = datetime(year, month, 1, 0,0,0)
-        end = datetime(endyear, endmonth, 1,0,0,0)
+        start = datetime(year, month, 1, 0, 0, 0)
+        end = datetime(endyear, endmonth, 1, 0, 0, 0)
         bound = {
-            "start": datetime.astimezone(start, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "end": datetime.astimezone(end, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            "start": datetime.astimezone(start, self._tz).strftime(
+                "%Y-%m-%dT%H:%M:%S.%fZ"
+            ),
+            "end": datetime.astimezone(end, self._tz).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         }
         logger.debug(f"time boundaries: {bound}")
         return bound
 
     def print_time_entry(self, start, end, duration):
-        assert (start.date() == end.date()) 
+        # assert (start.date() == end.date())
         print(
             f"{datetime.astimezone(start, self._tz).strftime('%Y-%m-%d')}\t"  # date
             f"{datetime.astimezone(start, self._tz).strftime('%H:%M')}\t"  # start
@@ -85,6 +87,7 @@ class Clock:
         )
 
     def run(self, year, month):
+        month_total = timedelta()
         self._workspaces = self.get_workspaces()
         for workspace in self._workspaces:
             # workspace_name = workspace.get('name')
@@ -100,11 +103,14 @@ class Clock:
                 project_total = timedelta()
                 project_id = project.get("id")
                 project_name = project.get("name")
-                print(f"\nProject {project_name}\tid: {project_id}")
 
-                time_entries = self.get_time_entries(workspace_id, project_id, year, month)
+                time_entries = self.get_time_entries(
+                    workspace_id, project_id, year, month
+                )
                 # print(f"Time entries:\n {time_entries}")
                 # print(f"{project}")
+                if len(time_entries) > 0:
+                    print(f"\nProject {project_name}")
                 for time_entry in time_entries:
                     # print(f'Time entry: {time_entry}')
                     try:
@@ -113,7 +119,8 @@ class Clock:
                             "%Y-%m-%dT%H:%M:%S%z",
                         )
                         end = datetime.strptime(
-                            time_entry.get("timeInterval").get("end"), "%Y-%m-%dT%H:%M:%S%z"
+                            time_entry.get("timeInterval").get("end"),
+                            "%Y-%m-%dT%H:%M:%S%z",
                         )
                     except TypeError:
                         print(f"Failed parsing {time_entry}")
@@ -122,13 +129,31 @@ class Clock:
                     self.print_time_entry(start, end, duration)
                     project_total += duration
 
-                print(
-                    f"Project total:\t\t\t{project_total.days*24 + project_total.seconds/3600}"
-                )
+                if len(time_entries) > 0:
+                    day_hours = project_total.days * 24 + project_total.seconds / 3600
+                    print("Project total:\t\t\t" f"{day_hours:.3f}")
+                month_total += project_total
+
+        month_hours = month_total.days * 24 + month_total.seconds / 3600
+        print("Total: \t\t\t" f"{month_hours:.3f}")
 
 
 if __name__ == "__main__":
+
     clock = Clock()
-    lastmonth = datetime.now() - relativedelta(months=1)
-    print('running with year {}, month {}'.format(lastmonth.year, lastmonth.month))
-    clock.run(lastmonth.year, lastmonth.month)
+
+    if len(argv) == 1:
+
+        lastmonth = datetime.now() - relativedelta(months=1)
+        print("running with year {}, month {}".format(lastmonth.year, lastmonth.month))
+        year = lastmonth.year
+        month = lastmonth.month
+
+    else:
+
+        if len(argv) != 3:
+            raise Exception("invalid year month")
+        year = argv[1]
+        month = argv[2]
+
+    clock.run(int(year), int(month))
