@@ -6,7 +6,6 @@ verify_ssl = true
 [packages]
 requests = "*"
 pytz = "*"
-openpyxl = "*"
 python-dateutil = "*"
 
 [requires]
