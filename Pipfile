@@ -9,7 +9,7 @@ pytz = "*"
 python-dateutil = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"
 
 [scripts]
 launch = "python clockipy.py"

@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 
-import os
-
-# import sys
+import argparse
 import logging
+import os
 import pytz
 import requests
 
-from sys import argv
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+# from sys import argv
 
 # logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -87,6 +86,8 @@ class Clock:
         )
 
     def run(self, year, month):
+        assert isinstance(year, int)
+        assert isinstance(month, int)
         month_total = timedelta()
         self._workspaces = self.get_workspaces()
         for workspace in self._workspaces:
@@ -109,29 +110,37 @@ class Clock:
                 )
                 # print(f"Time entries:\n {time_entries}")
                 # print(f"{project}")
-                if len(time_entries) > 0:
-                    print(f"\nProject {project_name}")
-                for time_entry in time_entries:
-                    # print(f'Time entry: {time_entry}')
-                    try:
-                        start = datetime.strptime(
-                            time_entry.get("timeInterval").get("start"),
-                            "%Y-%m-%dT%H:%M:%S%z",
-                        )
-                        end = datetime.strptime(
-                            time_entry.get("timeInterval").get("end"),
-                            "%Y-%m-%dT%H:%M:%S%z",
-                        )
-                    except TypeError:
-                        print(f"Failed parsing {time_entry}")
-                        exit
-                    duration = end - start
-                    self.print_time_entry(start, end, duration)
-                    project_total += duration
 
                 if len(time_entries) > 0:
+                    print(f"Project {project_name}")
+
+                    for time_entry in time_entries:
+                        # print(f'Time entry: {time_entry}')
+                        try:
+                            start = datetime.strptime(
+                                time_entry.get("timeInterval").get("start"),
+                                "%Y-%m-%dT%H:%M:%S%z",
+                            )
+                            end = datetime.strptime(
+                                time_entry.get("timeInterval").get("end"),
+                                "%Y-%m-%dT%H:%M:%S%z",
+                            )
+                        except TypeError:
+                            print(f"Failed parsing {time_entry}")
+                            exit
+
+                        try:
+                            duration = end - start
+                        except UnboundLocalError:
+                            print(f"Incomplete time entry")
+                            continue
+
+                        self.print_time_entry(start, end, duration)
+                        project_total += duration
+
                     day_hours = project_total.days * 24 + project_total.seconds / 3600
-                    print("Project total:\t\t\t" f"{day_hours:.3f}")
+                    print("Project total:\t\t\t" f"{day_hours:.3f}\n")
+
                 month_total += project_total
 
         month_hours = month_total.days * 24 + month_total.seconds / 3600
@@ -140,20 +149,13 @@ class Clock:
 
 if __name__ == "__main__":
 
+    _lastmonth = datetime.now() - relativedelta(months=1)
+
+    parser = argparse.ArgumentParser(description="Clockfy cli client")
+    parser.add_argument("--year", type=int, help="Year", action="store", default=_lastmonth.year)
+    parser.add_argument("--month", type=int, help="Month", action="store", default=_lastmonth.month)
+
+    args = parser.parse_args()
+
     clock = Clock()
-
-    if len(argv) == 1:
-
-        lastmonth = datetime.now() - relativedelta(months=1)
-        print("running with year {}, month {}".format(lastmonth.year, lastmonth.month))
-        year = lastmonth.year
-        month = lastmonth.month
-
-    else:
-
-        if len(argv) != 3:
-            raise Exception("invalid year month")
-        year = argv[1]
-        month = argv[2]
-
-    clock.run(int(year), int(month))
+    clock.run(args.year, args.month)
