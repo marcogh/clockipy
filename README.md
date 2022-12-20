@@ -11,5 +11,5 @@ simple [Clockify](https://clockify.me) report tool
     mv .env.sample .env
     vi .env
     pipenv shell
-    python clockipy.py [year] [month]
+    python clockipy.py --year [year] --month [month]
 
